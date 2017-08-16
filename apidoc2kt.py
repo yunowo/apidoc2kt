@@ -1,10 +1,9 @@
 import re
 import os
 from os.path import join
+from inflection import camelize
 
-
-def lower(api_name):
-    return api_name[0].lower() + api_name[1:]
+import config
 
 
 def param(method_name):
@@ -12,7 +11,7 @@ def param(method_name):
 
 
 def type_kt(type_name):
-    return type_name.replace("Number", "Int")
+    return type_name.replace("Number", "Int").replace('Object', 'Any')
 
 
 if __name__ == '__main__':
@@ -24,7 +23,8 @@ if __name__ == '__main__':
             apiGroup = p.findall(f.read())[0]
             print(f'Writing {apiGroup}.kt')
 
-            with open(apiGroup + '.kt', mode='w+', encoding='utf-8') as k:
+            with open(f'output/{apiGroup}.kt', mode='w+', encoding='utf-8') as k:
+                k.write(f'package {config.PACKAGE}\n\n')
                 k.write('import retrofit2.http.*\n\n')
                 k.write(f'interface {apiGroup} {{\n')
 
@@ -41,10 +41,14 @@ if __name__ == '__main__':
                     print(apiName)
 
                     p = re.compile(r'\* @apiParam {(.+)} (\S+)')
-                    apiParam = p.findall(a)
+                    apiParamAll = p.findall(a)
+                    # Filter Objects
+                    apiParam = filter(lambda aa: '.' not in aa[1], apiParamAll)
 
                     k.write(f'    @FormUrlEncoded\n' if method == 'post' else '')
                     k.write(f'    @{method.upper()}("{url}")\n')
-                    k.write(f'    fun {lower(apiName)}(')
-                    k.write(', '.join([f'@{param(method)}("{p[1]}") {lower(p[1])}: {type_kt(p[0])}' for p in apiParam]))
+                    k.write(f'    fun {camelize(apiName,False)}(')
+                    k.write(', '.join(
+                        [f'@{param(method)}("{p[1]}") {camelize(p[1], False)}: {type_kt(p[0])}' for p in apiParam]))
                     k.write('): Any\n\n')
+                k.write('}\n')
