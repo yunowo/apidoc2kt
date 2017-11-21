@@ -21,7 +21,10 @@ if __name__ == '__main__':
             with open(join('src', file), encoding='utf-8') as f:
                 # Get first apiGroup. It will be the output file name
                 p = re.compile(r'\* @apiGroup (.+)')
-                apiGroup = p.findall(f.read())[0]
+                pf = p.findall(f.read())
+                if len(pf) == 0:
+                    continue
+                apiGroup = pf[0]
                 print(f'Writing {apiGroup}.kt')
 
                 with open(f'output/{apiGroup}.kt', mode='w+', encoding='utf-8') as k:
@@ -34,7 +37,10 @@ if __name__ == '__main__':
                     rp = p.findall(f.read())
                     for a in rp:
                         p = re.compile(r'\* @api {(.+)} (\S+)')
-                        rp = p.findall(a)[0]
+                        pf = p.findall(a)
+                        if len(pf) == 0:
+                            continue
+                        rp = pf[0]
                         method, url = rp[0], rp[1]
 
                         p = re.compile(r'\* @apiName (.+)')
